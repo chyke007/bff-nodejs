@@ -1,0 +1,62 @@
+service: bff-nodejs
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-offline
+
+functions:
+  mobile-bff:
+    handler: functions/mobile-bff.handler
+    environment:
+      MicroA: bff-nodejs-${self:provider.stage}-microservice-a
+      MicroB: bff-nodejs-${self:provider.stage}-microservice-b
+      Region: ${self:provider.region}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - lambda:InvokeFunction
+          - lambda:InvokeAsync
+        Resource: "*"
+    events:
+      - http:
+          path: /mobile-bff
+          method: get
+          cors: true
+  web-bff:
+    handler: functions/web-bff.handler
+    environment:
+      MicroA: bff-nodejs-${self:provider.stage}-microservice-a
+      MicroB: bff-nodejs-${self:provider.stage}-microservice-b
+      Region: ${self:provider.region}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - lambda:InvokeFunction
+          - lambda:InvokeAsync
+        Resource: "*"
+    events:
+      - http:
+          path: /web-bff
+          method: get
+          cors: true
+  microservice-a:
+    handler: functions/microservice-a.handler
+    events:
+      - http:
+          path: /microservice-a
+          method: get
+          cors: true
+  microservice-b:
+    handler: functions/microservice-b.handler
+    events:
+      - http:
+          path: /microservice-b
+          method: get
+          cors: true
